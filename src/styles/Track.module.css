@@ -1,0 +1,5 @@
+.track {
+  width: 100%;
+  background-color: var(--background);
+  border: 3px solid var(--accent);
+}
