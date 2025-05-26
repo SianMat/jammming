@@ -5,6 +5,16 @@
 
 .btn-primary {
   background-color: var(--primary);
-  border: var(--accent);
+  border: 2px solid var(--accent);
   color: var(--text-dark);
+}
+
+.btn-primary:hover {
+  background-color: var(--button-hover);
+  border: 2px solid var(--accent);
+}
+
+.btn:active {
+  background-color: var(--accent) !important;
+  border: 2px solid var(--primary) !important;
 }
