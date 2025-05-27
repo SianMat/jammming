@@ -38,7 +38,7 @@ export async function redirectToAuthCodeFlow(clientId) {
   params.append("code_challenge", challenge);
   params.append(
     "scope",
-    "playlist-modify-public playlist-modify-private user-read-private user-read-email"
+    "playlist-modify-public playlist-modify-private user-read-private user-read-email playlist-read-private"
   );
 
   window.location = `https://accounts.spotify.com/authorize?${params.toString()}`;

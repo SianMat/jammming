@@ -4,6 +4,9 @@ export default function SearchBar({
   playlists = [],
   onSelectPlaylist,
   onSearch,
+  onAddNewPlaylist,
+  newPlaylist,
+  playlistId
 }) {
   return (
     <div className="row py-3">
@@ -19,19 +22,23 @@ export default function SearchBar({
           Search
         </button>
       </div>
-      <div className="col">
+      <div className="col d-flex">
         <select
           className="form-select"
+          value={playlistId}
           onChange={(e) => {
             onSelectPlaylist(e.target.value);
           }}
         >
           {playlists.map((playlist) => (
-            <option key={playlist.id} value={playlist}>
+            <option key={playlist.id} value={playlist.id}>
               {playlist.name}
             </option>
           ))}
         </select>
+        <button onClick={onAddNewPlaylist} className="btn btn-primary">
+          {newPlaylist ? "Cancel" : "New"}
+        </button>
       </div>
     </div>
   );
