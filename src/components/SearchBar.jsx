@@ -1,10 +1,9 @@
-import styles from "../styles/SearchBar.module.css";
-
 export default function SearchBar({
   searchTerm,
   setSearchTerm,
   playlists = [],
   onSelectPlaylist,
+  onSearch,
 }) {
   return (
     <div className="row py-3">
@@ -16,7 +15,9 @@ export default function SearchBar({
           placeholder="Search"
           className="form-control"
         />
-        <button className="btn btn-primary">Search</button>
+        <button onClick={onSearch} className="btn btn-primary">
+          Search
+        </button>
       </div>
       <div className="col">
         <select
@@ -26,7 +27,7 @@ export default function SearchBar({
           }}
         >
           {playlists.map((playlist) => (
-            <option key={playlist.id} value={playlist.id}>
+            <option key={playlist.id} value={playlist}>
               {playlist.name}
             </option>
           ))}

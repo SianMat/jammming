@@ -26,7 +26,7 @@ export default function TrackList({
   return (
     <div className={`container border rounded ${styles.tracklist}`}>
       <div className="row">
-        <div className="col">
+        <div className="col d-flex align-items-end gap-2 mb-2">
           <h5>Results</h5>
         </div>
       </div>

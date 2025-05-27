@@ -4,9 +4,13 @@ import TrackList from "../src/components/TrackList";
 import Playlist from "./components/Playlist.jsx";
 import FetchTracks from "./utils/FetchTracks.js";
 import SearchBar from "./components/SearchBar.jsx";
-import { FetchPlaylists, FetchPlaylist } from "./utils/FetchPlaylists.js";
+import Login from "./components/LogIn.jsx";
+import { getPlaylists, getPlaylistById } from "./utils/FetchPlaylists.js";
+import { searchSpotify } from "./utils/FetchTracks.js";
 
 function App() {
+  const [profile, setProfile] = useState(null);
+
   const [tracks, setTracks] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
@@ -15,33 +19,34 @@ function App() {
   const [addedTracks, setAddedTracks] = useState([]);
   const [removedTracks, setRemovedTracks] = useState([]);
 
-  function fetchTracks() {
-    setTracks(FetchTracks());
+  //search Spotify based on key word
+  async function handleSearch() {
+    const results = await searchSpotify(searchTerm);
+    setTracks(results);
   }
 
-  function fetchPlaylist(playlistId) {
-    const playlist = FetchPlaylist();
-    setSelectedPlaylist(playlist);
+  //fetch tracks for users selected playlist : defaults to top in list
+  async function handleFetchPlaylist(playlist) {
+    const playlistTracks = await getPlaylistById(playlist.id);
+    setSelectedPlaylist(playlistTracks);
     setPlayListName(playlist.name);
+    setAddedTracks([]);
+    setRemovedTracks([]);
   }
 
-  function fetchPlayLists() {
-    const listOfPlaylists = FetchPlaylists();
-    setPlaylists(listOfPlaylists);
-    if (listOfPlaylists && listOfPlaylists.length > 0) {
-      fetchPlaylist(listOfPlaylists[0].id);
+  //fetch playlists of logged in user
+  async function handleFetchPlaylists() {
+    const results = await getPlaylists();
+    setPlaylists(results);
+    if (results.length > 0) {
+      handleFetchPlaylist(results[0]);
     }
   }
-
-  useEffect(() => {
-    fetchTracks();
-    fetchPlayLists();
-  }, []);
 
   function handleDeleteTrack(trackId) {
     if (!removedTracks.map((t) => t.id).includes(trackId)) {
       setRemovedTracks((prev) => [
-        selectedPlaylist.tracks.items
+        selectedPlaylist
           .map((t) => t.track)
           .find((track) => track.id === trackId),
         ...prev,
@@ -68,11 +73,17 @@ function App() {
 
   return (
     <div className="container">
+      <Login
+        getPlaylists={handleFetchPlaylists}
+        profile={profile}
+        setProfile={setProfile}
+      />
       <SearchBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        onSelectPlaylist={fetchPlaylist}
+        onSelectPlaylist={handleFetchPlaylist}
         playlists={playlists}
+        onSearch={handleSearch}
       />
       <div className="row">
         <div className="col">

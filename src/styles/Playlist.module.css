@@ -2,4 +2,6 @@
   background-color: var(--primary);
   padding-top: 1rem;
   padding-bottom: 1rem;
+  min-width: 400px;
+  max-width: 90vw;
 }

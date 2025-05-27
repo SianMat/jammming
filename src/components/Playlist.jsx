@@ -3,7 +3,7 @@ import styles from "../styles/Playlist.module.css";
 import { useEffect, useState } from "react";
 
 export default function Playlist({
-  playlistName,
+  playlistName = "",
   setPlaylistName,
   playlist,
   removedTracks = [],
@@ -14,13 +14,13 @@ export default function Playlist({
   const [tracks, setTracks] = useState([]);
 
   useEffect(() => {
-    setTracks(playlist ? playlist.tracks.items.map((item) => item.track) : []);
+    setTracks(playlist ? playlist.map((item) => item.track) : []);
   }, [playlist]);
 
   useEffect(() => {
     if (playlist) {
       setTracks(() =>
-        playlist.tracks.items
+        playlist
           .map((item) => item.track)
           .filter((track) => !removedTracks.map((t) => t.id).includes(track.id))
       );
@@ -36,7 +36,7 @@ export default function Playlist({
             type="text"
             value={playlistName}
             onChange={(e) => setPlaylistName(e.target.value)}
-            placeholder="Search"
+            placeholder="Playlist Name"
             className="form-control"
           />
           <button className="btn btn-primary">Update</button>
