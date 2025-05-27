@@ -1,21 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 import TrackList from "../src/components/TrackList";
-import Playlist from "./components/Playlist.jsx";
-import FetchTracks from "./utils/FetchTracks.js";
+import Playlist from "./components/PlayList.jsx";
 import SearchBar from "./components/SearchBar.jsx";
 import Login from "./components/LogIn.jsx";
 import { getPlaylists, getPlaylistById } from "./utils/FetchPlaylists.js";
 import { searchSpotify } from "./utils/FetchTracks.js";
+import { renamePlaylist } from "./utils/UpdatePlaylist.js";
 
 function App() {
   const [profile, setProfile] = useState(null);
 
-  const [tracks, setTracks] = useState([]);
-  const [playlists, setPlaylists] = useState([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
+  const [tracks, setTracks] = useState([]); //tracks from searhc
   const [searchTerm, setSearchTerm] = useState("");
+  const [playlists, setPlaylists] = useState([]); //list of all user playlists
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null); //tracks of selected playlist
   const [playlistName, setPlayListName] = useState("");
+  const [playlistId, setPlaylistId] = useState("");
   const [addedTracks, setAddedTracks] = useState([]);
   const [removedTracks, setRemovedTracks] = useState([]);
 
@@ -30,6 +31,7 @@ function App() {
     const playlistTracks = await getPlaylistById(playlist.id);
     setSelectedPlaylist(playlistTracks);
     setPlayListName(playlist.name);
+    setPlaylistId(playlist.id);
     setAddedTracks([]);
     setRemovedTracks([]);
   }
@@ -71,6 +73,20 @@ function App() {
     setRemovedTracks((prev) => prev.filter((track) => track.id !== trackId));
   }
 
+  function handleRenamePlaylist() {
+    const success = renamePlaylist(playlistId, playlistName);
+    if (success) {
+      setPlaylists((pls) => {
+        return pls.map(
+          (p) =>
+            p.id === playlistId
+              ? { ...p, name: playlistName } // create new updated playlist object
+              : p // leave others untouched
+        );
+      });
+    }
+  }
+
   return (
     <div className="container">
       <Login
@@ -104,6 +120,7 @@ function App() {
             onDeleteTrack={handleDeleteTrack}
             onRemoveAddedTrack={handleRemoveAddedTrack}
             addedTracks={addedTracks}
+            onRename={handleRenamePlaylist}
           />
         </div>
       </div>

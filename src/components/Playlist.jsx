@@ -10,6 +10,7 @@ export default function Playlist({
   onDeleteTrack,
   addedTracks,
   onRemoveAddedTrack,
+  onRename,
 }) {
   const [tracks, setTracks] = useState([]);
 
@@ -39,7 +40,9 @@ export default function Playlist({
             placeholder="Playlist Name"
             className="form-control"
           />
-          <button className="btn btn-primary">Update</button>
+          <button onClick={onRename} className="btn btn-primary">
+            Update
+          </button>
         </div>
       </div>
       {addedTracks.map((track, i) => (
