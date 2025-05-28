@@ -40,6 +40,29 @@ async function getUserId(token) {
   return data.id; // the user's Spotify user ID
 }
 
+// Delete playlist
+export async function deletePlaylist(playlistId) {
+  const token = localStorage.getItem("spotify_access_token");
+
+  const res = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/followers`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error.message);
+  }
+
+  return true; // success
+}
+
+
 // Create a new playlist
 async function createPlaylist(userId, token, playlistName) {
   const body = {
@@ -92,18 +115,43 @@ export async function addTracksToPlaylist(playlistId, trackUris) {
     throw new Error(error.error.message);
   }
 
-  return await res.json(); // response with snapshot_id
+  return true; //return success
 }
 
-// Combined function
-export async function createPlaylistAndAddTracks(playlistName, tracks) {
-  console.log(playlistName);
-  console.log(tracks);
-  const trackUris = tracks.map((t) => t.uri);
-  console.log(trackUris);
+// Remove tracks from playlist
+export async function removeTracksFromPlaylist(playlistId, trackUris) {
   const token = localStorage.getItem("spotify_access_token");
-  const userId = await getUserId(token);
 
+  const body = {
+    tracks: trackUris.map((uri) => ({ uri })), // array of Spotify track URIs, e.g. ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"]
+  };
+
+  const res = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error.message);
+  }
+
+  return true; // return success
+}
+
+// Combined function to create new playlist and add tracks
+export async function createPlaylistAndAddTracks(playlistName, tracks) {
+  const trackUris = tracks.map((t) => t.uri);
+  const token = localStorage.getItem("spotify_access_token");
+
+  const userId = await getUserId(token);
   const playlist = await createPlaylist(userId, token, playlistName);
   const playlistId = playlist.id;
 

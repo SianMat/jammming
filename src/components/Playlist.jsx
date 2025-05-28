@@ -11,6 +11,7 @@ export default function Playlist({
   addedTracks,
   onRemoveAddedTrack,
   onSave,
+  onDeletePlaylist,
 }) {
   const [tracks, setTracks] = useState([]);
 
@@ -45,23 +46,29 @@ export default function Playlist({
           </button>
         </div>
       </div>
-
-      {addedTracks.map((track, i) => (
-        <Track
-          onButtonClick={onRemoveAddedTrack}
-          inPlaylist={true}
-          key={`track-${i}`}
-          track={track}
-        />
-      ))}
-      {tracks.map((track, i) => (
-        <Track
-          onButtonClick={onDeleteTrack}
-          inPlaylist={true}
-          key={`track-${i}`}
-          track={track}
-        />
-      ))}
+      <div className="col">
+        {addedTracks.map((track, i) => (
+          <Track
+            onButtonClick={onRemoveAddedTrack}
+            inPlaylist={true}
+            key={`track-${i}`}
+            track={track}
+          />
+        ))}
+        {tracks.map((track, i) => (
+          <Track
+            onButtonClick={onDeleteTrack}
+            inPlaylist={true}
+            key={`track-${i}`}
+            track={track}
+          />
+        ))}
+      </div>
+      <div className="col d-flex justify-content-center">
+        <button onClick={onDeletePlaylist} className="btn btn-danger">
+          Delete
+        </button>
+      </div>
     </div>
   );
 }

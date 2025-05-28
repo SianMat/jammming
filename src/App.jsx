@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useDebugValue, useEffect, useState } from "react";
 import "./App.css";
 import TrackList from "../src/components/TrackList";
 import Playlist from "./components/PlayList.jsx";
@@ -7,7 +7,12 @@ import Login from "./components/LogIn.jsx";
 import { getPlaylists, getPlaylistById } from "./utils/FetchPlaylists.js";
 import { searchSpotify } from "./utils/FetchTracks.js";
 import { renamePlaylist } from "./utils/UpdatePlaylist.js";
-import { createPlaylistAndAddTracks } from "./utils/UpdatePlaylist.js";
+import {
+  createPlaylistAndAddTracks,
+  addTracksToPlaylist,
+  removeTracksFromPlaylist,
+  deletePlaylist,
+} from "./utils/UpdatePlaylist.js";
 
 function App() {
   const [profile, setProfile] = useState(null);
@@ -15,8 +20,8 @@ function App() {
   const [tracks, setTracks] = useState([]); //tracks from search
   const [searchTerm, setSearchTerm] = useState("");
   const [playlists, setPlaylists] = useState([]); //list of all user playlists
-  const [selectedPlaylist, setSelectedPlaylist] = useState(null); //tracks of selected playlist
-  
+  const [selectedPlaylistTracks, setSelectedPlaylistTracks] = useState(null); //tracks of selected playlist
+
   const [playlistName, setPlayListName] = useState(""); //name of selected playlist
   const [playlistId, setPlaylistId] = useState(""); //id of selected playlist
   useEffect(() => {
@@ -30,7 +35,7 @@ function App() {
   useEffect(() => {
     if (newPlaylist) {
       setPlayListName("");
-      setSelectedPlaylist([]);
+      setSelectedPlaylistTracks([]);
     } else if (playlists.length > 0) {
       handleFetchPlaylist(playlists[0].id);
     }
@@ -45,11 +50,11 @@ function App() {
   }
 
   //fetch tracks for users selected playlist : defaults to top in list
-  async function handleFetchPlaylist(playlistId) {
-    if (playlistId) {
-      const playlistTracks = await getPlaylistById(playlistId);
-      setSelectedPlaylist(playlistTracks);
-      setPlaylistId(playlistId);
+  async function handleFetchPlaylist(pltId) {
+    if (pltId) {
+      const playlistTracks = await getPlaylistById(pltId);
+      setSelectedPlaylistTracks(playlistTracks);
+      setPlaylistId(pltId);
       setAddedTracks([]);
       setRemovedTracks([]);
     }
@@ -64,10 +69,11 @@ function App() {
     }
   }
 
+  // Delete existing track from playlist and move to search list
   function handleDeleteTrack(trackId) {
     if (!removedTracks.map((t) => t.id).includes(trackId)) {
       setRemovedTracks((prev) => [
-        selectedPlaylist
+        selectedPlaylistTracks
           .map((t) => t.track)
           .find((track) => track.id === trackId),
         ...prev,
@@ -75,8 +81,12 @@ function App() {
     }
   }
 
+  // Add new track to playlist
   function handleAddTrack(trackId) {
-    if (!addedTracks.map((t) => t.id).includes(trackId)) {
+    if (
+      !addedTracks.map((t) => t.id).includes(trackId) &&
+      !selectedPlaylistTracks.map((t) => t.track.id).includes(trackId)
+    ) {
       setAddedTracks((prev) => [
         tracks.find((track) => track.id === trackId),
         ...prev,
@@ -84,17 +94,19 @@ function App() {
     }
   }
 
+  // Remove track that was added but not yet saved and move back into search list
   function handleRemoveAddedTrack(trackId) {
     setAddedTracks((prev) => prev.filter((track) => track.id !== trackId));
   }
 
+  // Add track back into playlist that was removed but not saved
   function handleAddRemovedTrack(trackId) {
     setRemovedTracks((prev) => prev.filter((track) => track.id !== trackId));
   }
 
-  // TODO - UPDATE THIS TO SAVE PLAYLIST AND INCLUDE ADD OR REMOVE TRACKS
-  function handleRenamePlaylist() {
-    const success = renamePlaylist(playlistId, playlistName);
+  // call to spotify API to rename playlist
+  async function handleRenamePlaylist() {
+    const success = await renamePlaylist(playlistId, playlistName);
     if (success) {
       setPlaylists((pls) => {
         return pls.map(
@@ -107,6 +119,46 @@ function App() {
     }
   }
 
+  // call to spotify API to save new tracks
+  async function handleSaveNewTracks() {
+    const success = await addTracksToPlaylist(
+      playlistId,
+      addedTracks.map((t) => t.uri)
+    );
+    if (success) {
+      handleFetchPlaylist(playlistId);
+    }
+  }
+
+  // call to spotify API to remove tracks
+  async function handleSaveDeletedTracks() {
+    const success = await removeTracksFromPlaylist(
+      playlistId,
+      removedTracks.map((t) => t.uri)
+    );
+    if (success) {
+      handleFetchPlaylist(playlistId);
+    }
+  }
+
+  // save all changes to existing playlist
+  async function handleSaveChangesToExistingPlaylist() {
+    const existingPlaylist = playlists.find((p) => p.id === playlistId);
+    if (existingPlaylist) {
+      if (existingPlaylist.name !== playlistName) {
+        handleRenamePlaylist();
+      }
+      if (addedTracks.length > 0) {
+        handleSaveNewTracks();
+      }
+      if (removedTracks.length > 0) {
+        handleSaveDeletedTracks();
+      }
+    } else {
+      console.log("playlist not found");
+    }
+  }
+
   //display empty playlist
   function handleAddNewPlaylist() {
     setNewPlaylist((prev) => {
@@ -114,7 +166,7 @@ function App() {
     });
   }
 
-  //save new playlist
+  //call to spotify API to save new playlist
   async function handleSaveNewPlaylist() {
     const result = await createPlaylistAndAddTracks(playlistName, addedTracks);
     setPlaylists((prev) => [result, ...prev]);
@@ -122,11 +174,27 @@ function App() {
     handleFetchPlaylist(result.id);
   }
 
+  // handle button click to either save or update playlist
   function handleUpdatePlaylist() {
     if (newPlaylist) {
       handleSaveNewPlaylist();
     } else {
-      handleRenamePlaylist();
+      handleSaveChangesToExistingPlaylist();
+    }
+  }
+
+  // call to spotify API to delete a playlist
+  function handleDeletePlaylist() {
+    const success = deletePlaylist(playlistId);
+    if (success) {
+      setPlaylists((prev) => {
+        const updated = prev.filter((p) => p.id !== playlistId);
+        const top = updated[0];
+        if (top) {
+          handleFetchPlaylist(top.id);
+        }
+        return updated;
+      });
     }
   }
 
@@ -146,6 +214,7 @@ function App() {
         onAddNewPlaylist={handleAddNewPlaylist}
         newPlaylist={newPlaylist}
         playlistId={playlistId}
+        loggedIn={profile ? true : false}
       />
       <div className="row">
         <div className="col">
@@ -158,16 +227,21 @@ function App() {
           />
         </div>
         <div className="col">
-          <Playlist
-            playlistName={playlistName}
-            setPlaylistName={setPlayListName}
-            playlist={selectedPlaylist}
-            removedTracks={removedTracks}
-            onDeleteTrack={handleDeleteTrack}
-            onRemoveAddedTrack={handleRemoveAddedTrack}
-            addedTracks={addedTracks}
-            onSave={handleUpdatePlaylist}
-          />
+          {profile ? (
+            <Playlist
+              playlistName={playlistName}
+              setPlaylistName={setPlayListName}
+              playlist={selectedPlaylistTracks}
+              removedTracks={removedTracks}
+              onDeleteTrack={handleDeleteTrack}
+              onRemoveAddedTrack={handleRemoveAddedTrack}
+              addedTracks={addedTracks}
+              onSave={handleUpdatePlaylist}
+              onDeletePlaylist={handleDeletePlaylist}
+            />
+          ) : (
+            <></>
+          )}
         </div>
       </div>
     </div>
