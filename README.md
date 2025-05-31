@@ -2,6 +2,9 @@
 
 Jammming is a React web application that allows users to search for songs using the Spotify Web API, create custom playlists, and save them directly to their Spotify account.
 
+**Live App:**  
+[https://capable-centaur-786742.netlify.app](https://capable-centaur-786742.netlify.app)
+
 This project was built as part of Codecademy's _Front-End Engineer Career Path_ and demonstrates:
 
 - OAuth authentication
